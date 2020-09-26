@@ -54,13 +54,17 @@ class Mask:
         self.material = Material('<unnamed>', color=DEFAULT_COLOR)
 
     def __add__(self, other):
-        return Mask(self.region + other.region)
+        m = Mask(self.region + other.region)
+        m.material = self.material
+        return m
 
     def __or__(self, other):
         return self + other
 
     def __and__(self, other):
-        return Mask(self.region & other.region)
+        m = Mask(self.region & other.region)
+        m.material = self.material
+        return m
 
     def __sub__(self, other):
         m = Mask(self.region - other.region)
@@ -109,7 +113,7 @@ def _build_masks(layout: pya.Layout,
             (idx, purpose, material) = op_node.eval()
             layer_index = layout.layer(idx, purpose)
 
-            region = _flatten_cell(cell, layer_index, selection_box=selection_box)
+            region = _flatten_cell(cell, layer_index, selection_box=selection_box, layout=layout)
             if selection_box is not None:
                 region = region & selection_box
 
@@ -143,7 +147,7 @@ def _build_masks(layout: pya.Layout,
 
 def _flatten_cell(cell: pya.Cell, layer_index: int,
                   selection_box: Optional[pya.Box] = None,
-                  cell_cache: Optional[Dict[int, pya.Region]] = None) -> pya.Region:
+                  cell_cache: Optional[Dict[int, pya.Region]] = None, layout: pya.Layout = None) -> pya.Region:
     """ Recursively convert a single layer of a cell into a pya.Region.
     :param cell: The pya.Cell to be converted.
     :param layer_index: KLayout layer index.
@@ -179,8 +183,8 @@ def _flatten_cell(cell: pya.Cell, layer_index: int,
                 child_region = child_region & trans_selection
         else:
             # Recursively flatten child instance.
-            child_region = _flatten_cell(inst.cell, layer_index,
-                                         selection_box=trans_selection, cell_cache=cell_cache)
+            child_region = _flatten_cell(layout.cell(cell_id), layer_index,
+                                         selection_box=trans_selection, cell_cache=cell_cache, layout=layout)
 
             # Cache the region only if the cell has been fully rendered and was not cropped to selection.
             if trans_selection is None or inst.cell.bbox().inside(trans_selection):
