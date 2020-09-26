@@ -1,0 +1,85 @@
+from gds3xtrude.gds3xtrude.include import layer, Material
+
+# GDSII layer numbers.
+
+# Using std cell pnr boundry for now.
+bulk = layer(81, 4)
+
+nwell = layer(64, 20)
+diff = layer(65, 20)
+tap = layer(65, 44)
+poly = layer(66, 20)
+
+nsdm = layer(93, 44)
+psdm = layer(94, 20)
+
+licon = layer(66, 44)
+li = layer(67, 20)
+mcon = layer(67, 44)
+met1 = layer(68, 20)
+via1 = layer(68, 44)
+met2 = layer(69, 20)
+via2 = layer(69, 44)
+met3 = layer(70, 20)
+via3 = layer(70, 44)
+met4 = layer(71, 20)
+via4 = layer(71, 44)
+met5 = layer(72, 20)
+
+# Define materials/colors.
+
+m_bulk = Material("silicon", color=(0.4, 0.4, 0.4))
+m_nwell = Material("silicon", color=(0.2, 0.6, 0.2))
+m_psdm = Material("psdm", color=(0.9, 0.6, 0.6))
+m_nsdm = Material("nsdm", color=(0.9, 0.6, 0.9))
+m_fox = Material("sio2", color=(1.0, 1.0, 1.0))
+m_poly = Material("poly", color=(0.7, 0, 0))
+m_li = Material("li", color=(0.9, 0.6, 0.6))
+m_met1 = Material("metal", color=(0.3, 0.3, 1))
+m_via = Material("via", color=(0.1, 0.1, 0.1))
+m_met2 = Material("metal", color=(0.3, 1, 0.3))
+
+# Set materials/colors.
+
+bulk.material = m_bulk
+
+nwell.material = m_nwell
+psdm.material = m_psdm
+nsdm.material = m_nsdm
+
+poly.material = m_poly
+licon.material = m_via
+li.material = m_li
+met1.material = m_met1
+via1.material = m_via
+met2.material = m_met2
+
+nwell = nwell & bulk
+
+# done here due to materal color weirdness
+fox = layer(66, 20)
+fox.material = m_fox
+fox = fox & poly
+
+nsdm = (nsdm & diff) - poly
+psdm = (psdm & diff) - poly
+
+layerstack = [
+    (1000*1.00, bulk),
+    (1000*0.12, [nwell, bulk - nwell]),
+    (1000*0.12, [psdm, nsdm, nwell - psdm, bulk - nsdm - nwell]),
+    (1000*0.07, [licon - poly, fox]),
+    (1000*0.18, [licon - poly, poly]),
+    (1000*(0.9361-0.18-0.07), licon),
+    (1000*0.1, li),
+    (1000*0.34, mcon),
+    (1000*0.36, met1),
+    (1000*0.27, via1),
+    (1000*0.36, met2),
+    (1000*0.42, via2),
+    (1000*0.845, met3),
+    (1000*0.39, via3),
+    (1000*0.845, met4),
+    (1000*0.505, via4),
+    (1000*1.26, met5)
+]
